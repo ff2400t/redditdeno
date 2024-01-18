@@ -56,6 +56,35 @@ export async function submitImage(
   return await res.json();
 }
 
+export async function submitGallery(
+  reddit: Reddit,
+  data: SubmitGalleryOptoins,
+  arr: SubmitFileInterface[],
+): Promise<any> {
+  if (!arr.every((a) => a.mimeType.startsWith("image"))) {
+    throw "MimeType supplied is not an image";
+  }
+  const items = (await Promise.all(
+    arr.map((item) =>
+      uploadMedia(reddit, item.fileName, item.mimeType, item.blob)
+    ),
+  ).catch(() => {
+    throw Error("Failed to upload image");
+  })).map((a) => ({
+    caption: "string",
+    outbound_url: "string",
+    media_id: a.asset_id,
+  }));
+
+  data.items = items;
+
+  const res = await reddit.jsonPostRequest(
+    "/api/submit_gallery_post.json",
+    data,
+  );
+  return await res.json();
+}
+
 export async function uploadMedia(
   reddit: Reddit,
   filename: string,
@@ -110,4 +139,12 @@ interface SubmitFileInterface {
   fileName: string;
   mimeType: string;
   blob: Blob;
+}
+
+interface SubmitGalleryOptoins extends Omit<SubmitPostOptions, "kind"> {
+  items?: {
+    caption: string;
+    outbound_url: string;
+    media_id: string;
+  }[];
 }
