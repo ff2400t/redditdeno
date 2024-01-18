@@ -33,6 +33,65 @@ export async function submitPost(
   return await res.json();
 }
 
+export async function submitImage(
+  reddit: Reddit,
+  data: SubmitPostOptions,
+  image: SubmitFileInterface,
+): Promise<any> {
+  if (!image.mimeType.startsWith("image")) {
+    throw "MimeType supplied is not an image";
+  }
+  const { link } = await uploadMedia(
+    reddit,
+    image.fileName,
+    image.mimeType,
+    image.blob,
+  )
+    .catch(() => {
+      throw Error("Failed to upload image");
+    });
+  data.url = link;
+  data.kind = "image";
+  const res = await reddit.post(`/api/submit`, data);
+  return await res.json();
+}
+
+export async function uploadMedia(
+  reddit: Reddit,
+  filename: string,
+  mimetype: string,
+  blob: Blob,
+) {
+  const uploadResponse = await reddit.post("/api/media/asset.json", {
+    filepath: filename,
+    mimetype,
+  }).then((res) => res.json());
+  const uploadURL = "https:" + uploadResponse.args.action;
+  const formdata = new FormData();
+  uploadResponse.args.fields.forEach((item: UploadMediaArgs) =>
+    formdata.append(item.name, item.value)
+  );
+  formdata.append("file", blob, filename);
+  const _response = await fetch(uploadURL, {
+    method: "post",
+    mode: "no-cors",
+    body: formdata,
+  });
+  return {
+    asset_id: uploadResponse.asset.asset_id,
+    link: uploadURL + "/" +
+      uploadResponse.args.fields.find((item: UploadMediaArgs) =>
+        item.name === "key"
+      ).value,
+    websocket_url: uploadResponse.asset.websocket_url,
+  };
+}
+
+interface UploadMediaArgs {
+  name: string;
+  value: string;
+}
+
 interface SubmitPostOptions {
   title: string;
   sr: string; // name of the subreddit without the "r/" Prefix
@@ -45,4 +104,10 @@ interface SubmitPostOptions {
   spoiler?: boolean;
   url?: string; // we will use this for the image URL that we get from
   kind: "link" | "self" | "image" | "video" | "videogif";
+}
+
+interface SubmitFileInterface {
+  fileName: string;
+  mimeType: string;
+  blob: Blob;
 }
