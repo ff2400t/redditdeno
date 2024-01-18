@@ -24,3 +24,25 @@ export async function subredditPostRequirements(
   const res = await reddit.get(`/api/v1/${subreddit}/post_requirements`);
   return await res.json();
 }
+
+export async function submitPost(
+  reddit: Reddit,
+  data: SubmitPostOptions,
+): Promise<any> {
+  const res = await reddit.post(`/api/submit`, data);
+  return await res.json();
+}
+
+interface SubmitPostOptions {
+  title: string;
+  sr: string; // name of the subreddit without the "r/" Prefix
+  text?: string; // raw markdown text
+  flair_id?: string;
+  flair_text?: string;
+  nsfw?: boolean;
+  resubmit?: boolean;
+  send_replies?: boolean;
+  spoiler?: boolean;
+  url?: string; // we will use this for the image URL that we get from
+  kind: "link" | "self" | "image" | "video" | "videogif";
+}
