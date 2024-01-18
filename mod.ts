@@ -137,6 +137,24 @@ export default class Reddit {
     } else {
       throw new Error(`API error: Status code: ${res.status}`);
     }
+  }
+  async jsonPostRequest(
+    url: string,
+    data: any = {},
+  ): Promise<Response> {
+    const token = await this._getToken();
+
+    // Request JSON API response type
+    data.api_type = "json";
+    const res = await fetch(API_BASE_URL + url, {
+      method: "POST",
+      headers: {
+        // @ts-ignore-line
+        "authorization": token,
+        "user-agent": this.userAgent,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(data),
     });
     const statusType = Math.floor(res.status / 100);
 
