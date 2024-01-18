@@ -1,3 +1,5 @@
+// deno-lint-ignore-file no-explicit-any
+
 const TOKEN_BASE_URL = "https://www.reddit.com/api/v1/access_token";
 const API_BASE_URL = "https://oauth.reddit.com";
 
@@ -9,7 +11,7 @@ interface RedditClassOption {
   userAgent: string;
 }
 
-type HttpMethod = "GET";
+type HttpMethod = "GET" | "POST";
 
 export default class Reddit {
   username: string;
@@ -36,22 +38,13 @@ export default class Reddit {
     return this._sendRequest("GET", API_BASE_URL + url, data);
   }
 
+  post(url: string, data = {}) {
+    return this._sendRequest("POST", API_BASE_URL + url, data);
+  }
+
   async _sendRequest(method: HttpMethod, url: string, data: any = {}) {
     const token = await this._getToken();
     const body = await this._makeRequest(method, url, data, token);
-
-    // const errors = body && body.json && body.json.errors
-    // if (errors && errors.length > 0) {
-    // 	const err = new Error(
-    // 		errors.map(
-    // 			error => `${error[0]}: ${error[1]} (${error[2]})`
-    // 		).join('. ')
-    // 	)
-    // 	err.code = errors[0][0]
-    // 	err.codes = errors.map(error => error[0])
-    // 	throw err
-    // }
-
     return body;
   }
 
@@ -113,11 +106,14 @@ export default class Reddit {
     data: any = {},
     token: string,
   ): Promise<Response> {
-    const headers = new Headers({
-      // @ts-ignore-line
-      "authorization": token,
-      "user-agent": this.userAgent,
-    });
+    const opts: RequestInit = {
+      method,
+      headers: {
+        // @ts-ignore-line
+        "authorization": token,
+        "user-agent": this.userAgent,
+      },
+    };
 
     // Request JSON API response type
     data.api_type = "json";
@@ -125,10 +121,22 @@ export default class Reddit {
     if (method === "GET") {
       // @ts-ignore-line
       url += "?" + new URLSearchParams(data);
+    } else if (method === "POST") {
+      const form = new FormData();
+      for (const key in data) {
+        form.append(key, data[key]);
+      }
+      opts.body = form;
     }
-    const res = await fetch(url, {
-      method,
-      headers,
+
+    const res = await fetch(url, opts);
+    const statusType = Math.floor(res.status / 100);
+
+    if (statusType === 2) {
+      return res;
+    } else {
+      throw new Error(`API error: Status code: ${res.status}`);
+    }
     });
     const statusType = Math.floor(res.status / 100);
 
