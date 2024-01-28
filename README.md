@@ -1,6 +1,8 @@
-### Simple Reddit API client
+### Simple Reddit API client for Deno
 
-This is a based on https://github.com/feross/reddit. This is mostly just porting the library to using Fetch api. In addition this provides a few Utilities for making posts with an images.
+This is a based on this [reddit client](https://github.com/feross/reddit) for nodejs. This is mostly just porting the library to using Fetch api. In addition this provides a few Utilities for making posts with an images.
+
+This should also work seemlessly in other JS runtimes with Fetch support though i haven't tested this myself.
 
 - Lightweight – no unecessary dependencies, easy-to-audit source code
 - Modern API – uses async/await and promises
