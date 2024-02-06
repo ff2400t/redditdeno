@@ -1,6 +1,28 @@
 // deno-lint-ignore-file no-explicit-any
 import Reddit from "./mod.ts";
 
+interface SubmissionResult {
+  json: {
+    errors: any[];
+    data: {
+      url: string;
+      drafts_count: number;
+      id: string;
+      name: string;
+    };
+  };
+}
+
+interface SubmitImageResult {
+  json: {
+    errors: any[];
+    data: {
+      user_submitted_page: string;
+      websocket_url: string;
+    };
+  };
+}
+
 export async function subredditLinkFlairs(
   reddit: Reddit,
   subreddit: string,
@@ -28,7 +50,7 @@ export async function subredditPostRequirements(
 export async function submitPost(
   reddit: Reddit,
   data: SubmitPostOptions,
-): Promise<any> {
+): Promise<SubmissionResult> {
   const res = await reddit.post(`/api/submit`, data);
   return await res.json();
 }
@@ -37,7 +59,7 @@ export async function submitImage(
   reddit: Reddit,
   data: SubmitPostOptions,
   image: SubmitFileInterface,
-): Promise<any> {
+): Promise<SubmitImageResult> {
   if (!image.mimeType.startsWith("image")) {
     throw "MimeType supplied is not an image";
   }
@@ -60,7 +82,7 @@ export async function submitGallery(
   reddit: Reddit,
   data: SubmitGalleryOptoins,
   arr: SubmitFileInterface[],
-): Promise<any> {
+): Promise<SubmissionResult> {
   if (!arr.every((a) => a.mimeType.startsWith("image"))) {
     throw "MimeType supplied is not an image";
   }
