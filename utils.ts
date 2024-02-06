@@ -70,9 +70,9 @@ export async function submitGallery(
     ),
   ).catch(() => {
     throw Error("Failed to upload image");
-  })).map((a) => ({
-    caption: "string",
-    outbound_url: "string",
+  })).map((a, i) => ({
+    caption: arr[i].caption ?? "",
+    outbound_url: arr[i].outbound_url ?? "",
     media_id: a.asset_id,
   }));
 
@@ -139,6 +139,8 @@ interface SubmitFileInterface {
   fileName: string;
   mimeType: string;
   blob: Blob;
+  outbound_url?: string;
+  caption?: string;
 }
 
 interface SubmitGalleryOptoins extends Omit<SubmitPostOptions, "kind"> {
